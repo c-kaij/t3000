@@ -23,17 +23,21 @@ export function tileY2lat(y: number, zoom: number): number {
   return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
 }
 
-/** Get the 3x3 grid of tile coordinates centered on a lat/lng */
+/**
+ * Get an NxN grid of tile coordinates centered on a lat/lng.
+ * @param radius - half-size: 1 = 3×3, 2 = 5×5, 3 = 7×7 (default 1)
+ */
 export function getTileGrid(
   lat: number,
   lng: number,
-  zoom: number
+  zoom: number,
+  radius = 1,
 ): { x: number; y: number; z: number }[] {
   const centerX = lng2tileX(lng, zoom);
   const centerY = lat2tileY(lat, zoom);
   const tiles: { x: number; y: number; z: number }[] = [];
-  for (let dy = -1; dy <= 1; dy++) {
-    for (let dx = -1; dx <= 1; dx++) {
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
       tiles.push({ x: centerX + dx, y: centerY + dy, z: zoom });
     }
   }

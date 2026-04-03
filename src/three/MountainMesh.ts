@@ -7,123 +7,100 @@ export interface MountainGeometryData {
   height: number;
 }
 
+export interface MountainMeshResult {
+  mesh: THREE.Mesh;
+  topoMaterial: THREE.MeshLambertMaterial;
+  satMaterial: THREE.MeshLambertMaterial;
+  elevations: Float32Array;
+}
+
 /**
- * Build a Three.js mesh from elevation data.
- * worldScale: meters per Three.js unit (shared across all mountains)
+ * Build a Three.js terrain mesh from elevation data.
+ * Uses MeshLambertMaterial (no PBR complexity) so it renders reliably
+ * under any lighting setup.
  */
 export function buildMountainMesh(
   data: MountainGeometryData,
   satelliteCanvas: HTMLCanvasElement,
   lat: number,
   zoom: number,
-  worldScale: number
-): {
-  mesh: THREE.Mesh;
-  topoMaterial: THREE.MeshStandardMaterial;
-  satMaterial: THREE.MeshStandardMaterial;
-  wireframe: THREE.LineSegments;
-  elevations: Float32Array;
-} {
+  worldScale: number,
+  gridSize = 3, // number of tiles per side (3 = 3×3, 5 = 5×5, etc.)
+): MountainMeshResult {
   const { elevations, width, height } = data;
 
-  // Real-world size of the 3x3 tile grid in meters
-  const tileMeterWidth = tileWidthMeters(lat, zoom) * 3;
+  // Real-world footprint of the NxN tile grid in Three.js units
+  const tileMeterWidth = tileWidthMeters(lat, zoom) * gridSize;
   const planeSize = tileMeterWidth / worldScale;
 
+  // --- Geometry ---------------------------------------------------------------
   const geometry = new THREE.PlaneGeometry(planeSize, planeSize, width - 1, height - 1);
+  // Rotate from XY-plane (default) → XZ-plane so Y = elevation
   geometry.rotateX(-Math.PI / 2);
 
-  const positions = geometry.attributes.position;
+  const positions = geometry.attributes.position as THREE.BufferAttribute;
   let minElev = Infinity;
   let maxElev = -Infinity;
 
-  // Set Y (elevation) for each vertex
   for (let i = 0; i < positions.count; i++) {
-    const elev = elevations[i] || 0;
+    const elev = elevations[i] ?? 0;
     positions.setY(i, elev / worldScale);
     if (elev < minElev) minElev = elev;
     if (elev > maxElev) maxElev = elev;
   }
 
+  positions.needsUpdate = true;
   geometry.computeVertexNormals();
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
 
-  // Satellite material
+  // --- Satellite material ------------------------------------------------------
   const satTexture = new THREE.CanvasTexture(satelliteCanvas);
   satTexture.colorSpace = THREE.SRGBColorSpace;
-  const satMaterial = new THREE.MeshStandardMaterial({
-    map: satTexture,
-    roughness: 0.9,
-    metalness: 0.0,
-  });
+  const satMaterial = new THREE.MeshLambertMaterial({ map: satTexture });
 
-  // Topographic material - vertex colors based on elevation bands
-  const colors = new Float32Array(positions.count * 3);
+  // --- Topographic material (vertex colours by elevation band) -----------------
   const elevRange = maxElev - minElev || 1;
+  const colours = new Float32Array(positions.count * 3);
 
   for (let i = 0; i < positions.count; i++) {
-    const elev = elevations[i] || 0;
-    const t = (elev - minElev) / elevRange;
-    const color = getTopoColor(t);
-    colors[i * 3] = color.r;
-    colors[i * 3 + 1] = color.g;
-    colors[i * 3 + 2] = color.b;
+    const t = ((elevations[i] ?? 0) - minElev) / elevRange;
+    const c = topoColour(t);
+    colours[i * 3]     = c.r;
+    colours[i * 3 + 1] = c.g;
+    colours[i * 3 + 2] = c.b;
   }
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colours, 3));
 
-  const topoMaterial = new THREE.MeshStandardMaterial({
-    vertexColors: true,
-    roughness: 0.85,
-    metalness: 0.0,
-  });
+  const topoMaterial = new THREE.MeshLambertMaterial({ vertexColors: true });
 
+  // --- Mesh -------------------------------------------------------------------
   const mesh = new THREE.Mesh(geometry, satMaterial);
-  mesh.receiveShadow = true;
-  mesh.castShadow = true;
+  mesh.name = 'terrain';
 
-  // Wireframe for topo mode
-  const wireGeo = new THREE.WireframeGeometry(geometry);
-  const wireMat = new THREE.LineBasicMaterial({
-    color: 0xffffff,
-    opacity: 0.08,
-    transparent: true,
-  });
-  const wireframe = new THREE.LineSegments(wireGeo, wireMat);
-  wireframe.visible = false;
-
-  return { mesh, topoMaterial, satMaterial, wireframe, elevations };
+  return { mesh, topoMaterial, satMaterial, elevations };
 }
 
-function getTopoColor(t: number): THREE.Color {
-  // Green (low) -> Brown -> Gray -> White (high)
-  if (t < 0.2) {
-    return new THREE.Color().lerpColors(
-      new THREE.Color(0x2d5a27),
-      new THREE.Color(0x5a8a3c),
-      t / 0.2
-    );
-  } else if (t < 0.4) {
-    return new THREE.Color().lerpColors(
-      new THREE.Color(0x5a8a3c),
-      new THREE.Color(0x8a7a52),
-      (t - 0.2) / 0.2
-    );
-  } else if (t < 0.65) {
-    return new THREE.Color().lerpColors(
-      new THREE.Color(0x8a7a52),
-      new THREE.Color(0x7a7a7a),
-      (t - 0.4) / 0.25
-    );
-  } else if (t < 0.85) {
-    return new THREE.Color().lerpColors(
-      new THREE.Color(0x7a7a7a),
-      new THREE.Color(0xc0c0c0),
-      (t - 0.65) / 0.2
-    );
-  } else {
-    return new THREE.Color().lerpColors(
-      new THREE.Color(0xc0c0c0),
-      new THREE.Color(0xffffff),
-      (t - 0.85) / 0.15
-    );
+// ---------------------------------------------------------------------------
+// Colour ramp: green → brown → grey → white  (low → high)
+// ---------------------------------------------------------------------------
+function topoColour(t: number): THREE.Color {
+  const stops: [number, THREE.Color][] = [
+    [0.00, new THREE.Color(0x2d5a27)],
+    [0.20, new THREE.Color(0x5a8a3c)],
+    [0.40, new THREE.Color(0x8a7a52)],
+    [0.65, new THREE.Color(0x7a7a7a)],
+    [0.85, new THREE.Color(0xc0c0c0)],
+    [1.00, new THREE.Color(0xffffff)],
+  ];
+
+  for (let i = 1; i < stops.length; i++) {
+    const [lo, cLo] = stops[i - 1];
+    const [hi, cHi] = stops[i];
+    if (t <= hi) {
+      const alpha = (t - lo) / (hi - lo);
+      return new THREE.Color().lerpColors(cLo, cHi, alpha);
+    }
   }
+  return new THREE.Color(0xffffff);
 }

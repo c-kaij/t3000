@@ -19,9 +19,10 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 export async function fetchTerrainTiles(
   lat: number,
   lng: number,
-  zoom: number
+  zoom: number,
+  radius = 1,
 ): Promise<HTMLImageElement[]> {
-  const tiles = getTileGrid(lat, lng, zoom);
+  const tiles = getTileGrid(lat, lng, zoom, radius);
   return Promise.all(
     tiles.map((t) => loadImage(tileUrl('mapbox.terrain-rgb', t.z, t.x, t.y)))
   );
@@ -30,9 +31,10 @@ export async function fetchTerrainTiles(
 export async function fetchSatelliteTiles(
   lat: number,
   lng: number,
-  zoom: number
+  zoom: number,
+  radius = 1,
 ): Promise<HTMLImageElement[]> {
-  const tiles = getTileGrid(lat, lng, zoom);
+  const tiles = getTileGrid(lat, lng, zoom, radius);
   return Promise.all(
     tiles.map((t) => loadImage(tileUrl('mapbox.satellite', t.z, t.x, t.y)))
   );

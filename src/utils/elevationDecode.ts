@@ -15,23 +15,23 @@ export function decodeTerrainRGB(imageData: ImageData): Float32Array {
 }
 
 /**
- * Stitch a 3x3 grid of tile images onto a canvas and return elevation data.
- * Each tile is 512x512 (2x retina). Output is downsampled to resolution x resolution.
+ * Stitch an NxN grid of tile images onto a canvas and return elevation data.
+ * Each tile is 512x512 (2x retina). Grid size is inferred from images.length.
+ * Output is downsampled to resolution x resolution.
  */
 export function stitchElevationTiles(
   images: HTMLImageElement[],
-  resolution: number = 256
+  resolution: number = 256,
 ): { elevations: Float32Array; width: number; height: number } {
   const tileSize = 512; // @2x tiles
-  const gridSize = 3;
-  const fullSize = tileSize * gridSize; // 1536
+  const gridSize = Math.round(Math.sqrt(images.length)); // 3 for 9 imgs, 5 for 25, etc.
+  const fullSize = tileSize * gridSize;
 
   const canvas = document.createElement('canvas');
   canvas.width = fullSize;
   canvas.height = fullSize;
   const ctx = canvas.getContext('2d')!;
 
-  // Draw 3x3 grid
   for (let i = 0; i < images.length; i++) {
     const col = i % gridSize;
     const row = Math.floor(i / gridSize);
@@ -42,7 +42,7 @@ export function stitchElevationTiles(
   const fullData = ctx.getImageData(0, 0, fullSize, fullSize);
   const fullElevations = decodeTerrainRGB(fullData);
 
-  // Downsample to target resolution using bilinear sampling
+  // Downsample to target resolution
   const result = new Float32Array(resolution * resolution);
   const scale = fullSize / resolution;
 
@@ -59,10 +59,11 @@ export function stitchElevationTiles(
 
 /**
  * Stitch satellite tile images onto a canvas and return as a texture source.
+ * Grid size is inferred from images.length.
  */
 export function stitchSatelliteTiles(images: HTMLImageElement[]): HTMLCanvasElement {
   const tileSize = 512;
-  const gridSize = 3;
+  const gridSize = Math.round(Math.sqrt(images.length));
   const fullSize = tileSize * gridSize;
 
   const canvas = document.createElement('canvas');

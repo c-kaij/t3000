@@ -10,6 +10,8 @@ export interface MountainData {
   bbox: [number, number, number, number];
   accentColor: string;
   zoom: number;
+  /** Half-size of tile grid: 1 = 3×3 (default), 2 = 5×5, 3 = 7×7 */
+  tileRadius?: number;
 }
 
 const mountains: MountainData[] = [
@@ -36,6 +38,7 @@ const mountains: MountainData[] = [
     bbox: [35.78, 76.41, 35.98, 76.62],
     accentColor: '#ef4444',
     zoom: 12,
+    tileRadius: 2, // 5×5 grid → ~39.6 km × 39.6 km, includes Gasherbrum I/II
   },
   {
     id: 'nanga-parbat',

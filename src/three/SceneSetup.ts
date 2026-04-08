@@ -8,130 +8,78 @@ export interface SceneContext {
   controls: OrbitControls;
 }
 
-export function setupScene(container: HTMLElement): SceneContext {
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x080c14);
-  scene.fog = new THREE.FogExp2(0x080c14, 0.00015);
-
-  // Camera
-  const camera = new THREE.PerspectiveCamera(
-    50,
-    container.clientWidth / container.clientHeight,
-    0.1,
-    50000
-  );
-  camera.position.set(0, 8, 12);
-
-  // Renderer
-  const renderer = new THREE.WebGLRenderer({
-    antialias: true,
-    powerPreference: 'high-performance',
-  });
-  renderer.setSize(container.clientWidth, container.clientHeight);
+/**
+ * Initialise the Three.js scene on an existing <canvas> element.
+ * The canvas is already in the DOM (rendered via JSX), so its CSS
+ * dimensions are correct when this function is called from useLayoutEffect.
+ */
+export function setupScene(canvas: HTMLCanvasElement): SceneContext {
+  // ── Renderer ──────────────────────────────────────────────────────────────
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.1;
-  container.appendChild(renderer.domElement);
+  // Shadows disabled for now — add back once rendering is confirmed working
+  renderer.shadowMap.enabled = false;
 
-  // Controls
-  const controls = new OrbitControls(camera, renderer.domElement);
+  // false = don't touch CSS; the canvas fills its container via CSS classes
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  renderer.setSize(w > 0 ? w : 800, h > 0 ? h : 600, false);
+
+  // ── Scene ─────────────────────────────────────────────────────────────────
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0d1117);
+  scene.fog = new THREE.FogExp2(0x0d1117, 0.00018);
+
+  // ── Camera ────────────────────────────────────────────────────────────────
+  const aspect = w > 0 && h > 0 ? w / h : 16 / 9;
+  const camera = new THREE.PerspectiveCamera(55, aspect, 1, 100000);
+  camera.position.set(0, 60, 110);
+
+  // ── Controls ──────────────────────────────────────────────────────────────
+  const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
   controls.maxPolarAngle = Math.PI / 2.05;
-  controls.minDistance = 1;
-  controls.maxDistance = 500;
-  controls.target.set(0, 2, 0);
+  controls.minDistance = 5;
+  controls.maxDistance = 1000;
+  controls.target.set(0, 20, 0);
+  controls.update();
 
-  // Lighting
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-  scene.add(ambientLight);
+  // ── Lighting ──────────────────────────────────────────────────────────────
+  // Generous ambient so terrain is always readable
+  scene.add(new THREE.AmbientLight(0xffffff, 1.8));
 
-  const dirLight = new THREE.DirectionalLight(0xfff5e6, 1.2);
-  dirLight.position.set(-10, 15, 10);
-  dirLight.castShadow = true;
-  dirLight.shadow.mapSize.width = 2048;
-  dirLight.shadow.mapSize.height = 2048;
-  dirLight.shadow.camera.near = 0.5;
-  dirLight.shadow.camera.far = 500;
-  dirLight.shadow.camera.left = -50;
-  dirLight.shadow.camera.right = 50;
-  dirLight.shadow.camera.top = 50;
-  dirLight.shadow.camera.bottom = -50;
-  scene.add(dirLight);
+  // Primary directional sun
+  const sun = new THREE.DirectionalLight(0xffe8d0, 2.8);
+  sun.position.set(-200, 400, 200);
+  scene.add(sun);
 
-  const hemisphereLight = new THREE.HemisphereLight(0x87ceeb, 0x362d1b, 0.3);
-  scene.add(hemisphereLight);
+  // Sky/ground colour fill
+  scene.add(new THREE.HemisphereLight(0x87ceeb, 0x2d3a1e, 0.9));
 
-  // Star particles
-  const starCount = 2000;
-  const starGeo = new THREE.BufferGeometry();
-  const starPositions = new Float32Array(starCount * 3);
-  for (let i = 0; i < starCount; i++) {
-    starPositions[i * 3] = (Math.random() - 0.5) * 2000;
-    starPositions[i * 3 + 1] = Math.random() * 500 + 50;
-    starPositions[i * 3 + 2] = (Math.random() - 0.5) * 2000;
-  }
-  starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-  const starMat = new THREE.PointsMaterial({
-    color: 0xffffff,
-    size: 0.3,
-    transparent: true,
-    opacity: 0.6,
-    sizeAttenuation: true,
-  });
-  const stars = new THREE.Points(starGeo, starMat);
-  scene.add(stars);
-
-  // Ground plane
-  const groundGeo = new THREE.PlaneGeometry(2000, 2000);
-  const groundMat = new THREE.MeshStandardMaterial({
-    color: 0x0a0e18,
-    roughness: 1,
-    metalness: 0,
-  });
-  const ground = new THREE.Mesh(groundGeo, groundMat);
+  // ── Ground plane ──────────────────────────────────────────────────────────
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(8000, 8000),
+    new THREE.MeshLambertMaterial({ color: 0x0a1220 }),
+  );
   ground.rotation.x = -Math.PI / 2;
-  ground.position.y = -0.01;
-  ground.receiveShadow = true;
+  ground.position.y = -2;
   scene.add(ground);
 
   return { scene, camera, renderer, controls };
 }
 
-export function animateCameraTo(
+/** Update renderer + camera when the canvas is resized. */
+export function handleCanvasResize(
+  canvas: HTMLCanvasElement,
   camera: THREE.PerspectiveCamera,
-  controls: OrbitControls,
-  target: THREE.Vector3,
-  duration: number = 1000
+  renderer: THREE.WebGLRenderer,
 ): void {
-  const startPos = camera.position.clone();
-  const startTarget = controls.target.clone();
-
-  // Position camera above and slightly behind the target
-  const endPos = new THREE.Vector3(
-    target.x + 3,
-    target.y + 5,
-    target.z + 6
-  );
-  const endTarget = target.clone();
-
-  const startTime = performance.now();
-
-  function update() {
-    const elapsed = performance.now() - startTime;
-    const t = Math.min(elapsed / duration, 1);
-    // Smooth ease-in-out
-    const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-
-    camera.position.lerpVectors(startPos, endPos, ease);
-    controls.target.lerpVectors(startTarget, endTarget, ease);
-    controls.update();
-
-    if (t < 1) {
-      requestAnimationFrame(update);
-    }
-  }
-  requestAnimationFrame(update);
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  if (w === 0 || h === 0) return;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
 }

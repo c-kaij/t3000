@@ -13,6 +13,8 @@ export interface Store {
   address: string;
   orders: number;
   revenue: string;
+  lat: number;
+  lng: number;
 }
 
 export const stores: Store[] = [
@@ -29,6 +31,8 @@ export const stores: Store[] = [
     address: 'Hornsgatan 134, Stockholm',
     orders: 3,
     revenue: '42 500',
+    lat: 59.3163,
+    lng: 18.0480,
   },
   {
     id: 2,
@@ -43,6 +47,8 @@ export const stores: Store[] = [
     address: 'Flemingsbergsliden 2, Huddinge',
     orders: 5,
     revenue: '78 200',
+    lat: 59.2170,
+    lng: 17.9450,
   },
   {
     id: 3,
@@ -57,6 +63,8 @@ export const stores: Store[] = [
     address: 'Värmdövägen 90, Nacka',
     orders: 2,
     revenue: '31 000',
+    lat: 59.3119,
+    lng: 18.1700,
   },
   {
     id: 4,
@@ -71,6 +79,8 @@ export const stores: Store[] = [
     address: 'Storgatan 12, Stockholm',
     orders: 1,
     revenue: '12 300',
+    lat: 59.3358,
+    lng: 18.0830,
   },
   {
     id: 5,
@@ -85,6 +95,8 @@ export const stores: Store[] = [
     address: 'Scheelegatan 7, Stockholm',
     orders: 4,
     revenue: '55 700',
+    lat: 59.3330,
+    lng: 18.0270,
   },
 ];
 

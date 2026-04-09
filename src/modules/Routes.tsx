@@ -2,13 +2,15 @@ import { useState } from 'react';
 import Icon from '../components/Icon';
 import { colors, card } from '../tokens';
 import { weekMeetings, type Meeting } from '../data/stores';
+import KartaView from './KartaView';
 
 const DAYS = ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'];
 const DATES = [6, 7, 8, 9, 10];
 const DAY_NAMES = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'];
 const TODAY = 8;
 
-type ViewMode = 'day' | 'week';
+type ViewMode = 'day' | 'week' | 'map';
+const VIEW_LABELS: Record<ViewMode, string> = { day: 'Dagsvy', week: 'Veckovy', map: 'Karta' };
 
 function MeetingCard({ meeting, isLast }: { meeting: Meeting; isLast: boolean }) {
   return (
@@ -57,29 +59,17 @@ export default function Routes() {
                 key={d}
                 onClick={() => setSelDay(DATES[i])}
                 style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 5,
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '4px 0',
-                  minHeight: 44,
-                  justifyContent: 'center',
+                  flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  gap: 5, background: 'none', border: 'none', cursor: 'pointer',
+                  padding: '4px 0', minHeight: 44, justifyContent: 'center',
                 }}
               >
                 <span style={{ fontSize: 11, color: colors.soft, fontWeight: 500 }}>{d}</span>
                 <div
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 18,
+                    width: 36, height: 36, borderRadius: 18,
                     background: isSel ? colors.blue : 'transparent',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}
                 >
                   <span style={{ fontSize: 15, fontWeight: isSel ? 700 : 500, color: isSel ? '#fff' : colors.text }}>
@@ -93,46 +83,53 @@ export default function Routes() {
         </div>
       </div>
 
-      {/* Day / week toggle */}
+      {/* Day / week / map toggle */}
       <div style={{ display: 'flex', background: colors.bgMuted, borderRadius: 10, padding: 3, marginBottom: 20 }}>
-        {(['day', 'week'] as ViewMode[]).map((v) => (
+        {(['day', 'week', 'map'] as ViewMode[]).map((v) => (
           <button
             key={v}
             onClick={() => setView(v)}
             style={{
-              flex: 1,
-              padding: '8px 0',
-              borderRadius: 8,
-              border: 'none',
+              flex: 1, padding: '8px 0', borderRadius: 8, border: 'none',
               background: view === v ? colors.bg : 'transparent',
               color: view === v ? colors.text : colors.mid,
               fontWeight: view === v ? 600 : 400,
-              fontSize: 14,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
+              fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
               boxShadow: view === v ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
               minHeight: 44,
             }}
           >
-            {v === 'day' ? 'Dagsvy' : 'Veckovy'}
+            {VIEW_LABELS[v]}
           </button>
         ))}
       </div>
 
-      <div style={{ marginBottom: 10, fontSize: 13, color: colors.mid, fontWeight: 500 }}>
-        {DAY_NAMES[dayIndex]} {selDay} april · {shown.length} besök
-      </div>
+      {/* Map view */}
+      {view === 'map' && (
+        <KartaView
+          selDay={selDay}
+          dayName={`${DAY_NAMES[dayIndex]} ${selDay} april`}
+        />
+      )}
 
-      {shown.length === 0 ? (
-        <div style={{ ...card({ textAlign: 'center', padding: 32, color: colors.soft }) }}>
-          Inga möten inplanerade
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-          {shown.map((m, i) => (
-            <MeetingCard key={m.id} meeting={m} isLast={i === shown.length - 1} />
-          ))}
-        </div>
+      {/* Day / week views */}
+      {view !== 'map' && (
+        <>
+          <div style={{ marginBottom: 10, fontSize: 13, color: colors.mid, fontWeight: 500 }}>
+            {DAY_NAMES[dayIndex]} {selDay} april · {shown.length} besök
+          </div>
+          {shown.length === 0 ? (
+            <div style={{ ...card({ textAlign: 'center', padding: 32, color: colors.soft }) }}>
+              Inga möten inplanerade
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {shown.map((m, i) => (
+                <MeetingCard key={m.id} meeting={m} isLast={i === shown.length - 1} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

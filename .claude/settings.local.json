@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls /c/Users/JohanKaij/MountainComp/.claude/worktrees/zen-tesla/.env*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git -C /c/Users/JohanKaij/MountainComp/.claude/worktrees/zen-tesla status)",
+      "Bash(git -C /c/Users/JohanKaij/MountainComp/.claude/worktrees/zen-tesla log --oneline -3)",
+      "WebFetch(domain:rscued.se)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

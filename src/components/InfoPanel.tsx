@@ -65,7 +65,7 @@ export default function InfoPanel({ mountain, elevations }: Props) {
               font: { size: 9 },
               // Show ticks every 2 km
               stepSize: 2000,
-              callback: (v) => `${Number(v) / 1000}km`,
+              callback: (v: number | string) => `${Number(v) / 1000}km`,
             },
             grid: { color: 'rgba(255,255,255,0.06)' },
           },

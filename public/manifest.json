@@ -1,0 +1,22 @@
+{
+  "name": "Exercise Tiers",
+  "short_name": "Ex. Tiers",
+  "description": "Tiered strength training exercise reference, ranked by training goal.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0b0d",
+  "theme_color": "#0b0b0d",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -11,7 +11,7 @@ import StickFigure from './components/StickFigure';
 export default function Detail({ goal }: { goal: Goal }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { exercises, movements } = useLibrary();
+  const { exercises, movements, removeExercise } = useLibrary();
   const exercise = exercises.find((e) => e.id === id);
 
   useEffect(() => {
@@ -206,6 +206,30 @@ export default function Detail({ goal }: { goal: Goal }) {
         <SectionHeader icon="⭐" title="Rating Breakdown" />
         <RatingBars ratings={exercise.ratings} />
       </div>
+
+      {exercise.custom && (
+        <button
+          onClick={() => {
+            if (window.confirm(`Remove "${exercise.name}" from your exercise list?`)) {
+              removeExercise(exercise.id);
+              navigate('/');
+            }
+          }}
+          style={{
+            background: 'none',
+            border: `1px solid ${colors.border}`,
+            borderRadius: radii.md,
+            color: colors.textSoft,
+            fontSize: 13,
+            fontWeight: 700,
+            padding: '10px 0',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          Remove from Exercise List
+        </button>
+      )}
     </div>
   );
 }

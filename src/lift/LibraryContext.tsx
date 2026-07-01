@@ -22,7 +22,15 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
       });
     };
 
-    return { exercises, movements, addExercise };
+    const removeExercise: LibraryContextValue['removeExercise'] = (id) => {
+      setCustom((prev) => {
+        const next = prev.filter((c) => c.exercise.id !== id);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        return next;
+      });
+    };
+
+    return { exercises, movements, addExercise, removeExercise };
   }, [custom]);
 
   return <LibraryContext.Provider value={value}>{children}</LibraryContext.Provider>;

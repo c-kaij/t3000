@@ -23,6 +23,7 @@ export interface LibraryContextValue {
   exercises: Exercise[];
   movements: Record<string, MovementViz>;
   addExercise: (exercise: Exercise, movement: MovementViz | null) => void;
+  removeExercise: (id: string) => void;
 }
 
 export const LibraryContext = createContext<LibraryContextValue | null>(null);

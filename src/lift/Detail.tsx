@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { EXERCISES } from './data/exercises';
+import { MOVEMENTS } from './data/movements';
 import { GOALS, type Goal } from './types';
 import { colors, cardStyle, radii, spacing } from './theme';
 import TierBadge from './components/TierBadge';
 import RatingBars from './components/RatingBars';
 import SectionHeader from './components/SectionHeader';
+import StickFigure from './components/StickFigure';
 
 export default function Detail({ goal }: { goal: Goal }) {
   const { id } = useParams();
@@ -17,6 +19,8 @@ export default function Detail({ goal }: { goal: Goal }) {
   }, [exercise, navigate]);
 
   if (!exercise) return null;
+
+  const movement = MOVEMENTS[exercise.id];
 
   return (
     <div
@@ -65,6 +69,17 @@ export default function Detail({ goal }: { goal: Goal }) {
           {exercise.tagline}
         </p>
       </div>
+
+      {movement && (
+        <div style={cardStyle}>
+          <SectionHeader icon="🖊️" title="Movement" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            <StickFigure pose={movement.start} bar={movement.bar} rig={movement.rig} label="Start" />
+            <span style={{ color: colors.textSoft, fontSize: 22, flexShrink: 0 }}>→</span>
+            <StickFigure pose={movement.finish} bar={movement.bar} rig={movement.rig} label="Finish" />
+          </div>
+        </div>
+      )}
 
       <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', gap: 8 }}>
         {GOALS.map((g) => (

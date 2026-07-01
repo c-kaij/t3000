@@ -21,6 +21,8 @@ export interface Exercise {
   mistakes: string[];
   ratings: RatingBreakdown;
   tiers: Record<Goal, Tier>;
+  aliases?: string[];
+  custom?: boolean;
 }
 
 export interface Point {

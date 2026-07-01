@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { EXERCISES } from './data/exercises';
-import { MOVEMENTS } from './data/movements';
+import { useLibrary } from './library';
 import { GOALS, type Goal } from './types';
 import { colors, cardStyle, radii, spacing } from './theme';
 import TierBadge from './components/TierBadge';
@@ -12,7 +11,8 @@ import StickFigure from './components/StickFigure';
 export default function Detail({ goal }: { goal: Goal }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const exercise = EXERCISES.find((e) => e.id === id);
+  const { exercises, movements } = useLibrary();
+  const exercise = exercises.find((e) => e.id === id);
 
   useEffect(() => {
     if (!exercise) navigate('/', { replace: true });
@@ -20,7 +20,7 @@ export default function Detail({ goal }: { goal: Goal }) {
 
   if (!exercise) return null;
 
-  const movement = MOVEMENTS[exercise.id];
+  const movement = movements[exercise.id];
 
   return (
     <div
@@ -52,15 +52,39 @@ export default function Detail({ goal }: { goal: Goal }) {
       <div>
         <div
           style={{
-            fontSize: 12,
-            fontWeight: 800,
-            letterSpacing: 0.6,
-            textTransform: 'uppercase',
-            color: colors.red,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
             marginBottom: 6,
           }}
         >
-          {exercise.category}
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 800,
+              letterSpacing: 0.6,
+              textTransform: 'uppercase',
+              color: colors.red,
+            }}
+          >
+            {exercise.category}
+          </span>
+          {exercise.custom && (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: 0.4,
+                textTransform: 'uppercase',
+                color: colors.textSoft,
+                border: `1px solid ${colors.border}`,
+                borderRadius: radii.sm,
+                padding: '2px 6px',
+              }}
+            >
+              Auto-added
+            </span>
+          )}
         </div>
         <h1 style={{ margin: 0, fontSize: 28, fontWeight: 900, letterSpacing: -0.5, color: colors.text }}>
           {exercise.name}

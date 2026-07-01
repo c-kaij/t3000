@@ -4,6 +4,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'romanian-deadlift',
     name: 'Romanian Deadlift',
+    aliases: ['RDL', 'stiff leg deadlift', 'stiff-legged deadlift'],
     category: 'Deadlift Accessory',
     tagline: 'Build a stronger posterior chain. Improve your deadlift lockout.',
     builds: ['Hamstrings', 'Glutes', 'Spinal Erectors', 'Deadlift Lockout Strength'],
@@ -33,6 +34,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'conventional-deadlift',
     name: 'Conventional Deadlift',
+    aliases: ['deadlift', 'DL'],
     category: 'Deadlift',
     tagline: 'The ultimate posterior chain test — pick it up and lock it out.',
     builds: ['Hamstrings', 'Glutes', 'Spinal Erectors', 'Lats', 'Grip'],
@@ -62,6 +64,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'sumo-deadlift',
     name: 'Sumo Deadlift',
+    aliases: ['sumo pull', 'sumo dl'],
     category: 'Deadlift',
     tagline: 'A wide stance pull that shortens the range and favors the legs.',
     builds: ['Quads', 'Glutes', 'Adductors', 'Spinal Erectors'],
@@ -91,6 +94,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'back-squat',
     name: 'Back Squat',
+    aliases: ['squat', 'barbell squat', 'high bar squat', 'low bar squat'],
     category: 'Squat',
     tagline: 'The foundational lower-body lift for raw strength and mass.',
     builds: ['Quads', 'Glutes', 'Adductors', 'Core', 'Spinal Erectors'],
@@ -120,6 +124,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'front-squat',
     name: 'Front Squat',
+    aliases: ['front bar squat', 'clean grip squat'],
     category: 'Squat',
     tagline: 'An upright, quad-dominant squat that also hammers the core.',
     builds: ['Quads', 'Upper Back', 'Core', 'Glutes'],
@@ -149,6 +154,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'bulgarian-split-squat',
     name: 'Bulgarian Split Squat',
+    aliases: ['BSS', 'rear foot elevated split squat', 'RFESS'],
     category: 'Squat Accessory',
     tagline: 'Brutal single-leg builder that exposes and fixes imbalances.',
     builds: ['Quads', 'Glutes', 'Balance & Stability'],
@@ -178,6 +184,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'leg-press',
     name: 'Leg Press',
+    aliases: ['machine leg press', 'sled press'],
     category: 'Squat Accessory',
     tagline: "High-volume quad builder with the spine taken out of the equation.",
     builds: ['Quads', 'Glutes', 'Adductors'],
@@ -207,6 +214,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'walking-lunge',
     name: 'Walking Lunge',
+    aliases: ['lunges', 'forward lunge'],
     category: 'Squat Accessory',
     tagline: 'A dynamic, athletic single-leg movement that builds legs and lungs.',
     builds: ['Quads', 'Glutes', 'Hamstrings', 'Balance'],
@@ -236,6 +244,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'goblet-squat',
     name: 'Goblet Squat',
+    aliases: ['kettlebell squat', 'dumbbell squat at chest'],
     category: 'Squat Accessory',
     tagline: 'The easiest squat pattern to teach — and a solid burner on its own.',
     builds: ['Quads', 'Glutes', 'Core'],
@@ -265,6 +274,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'bench-press',
     name: 'Bench Press',
+    aliases: ['flat bench', 'barbell bench press', 'BP'],
     category: 'Push',
     tagline: 'The classic upper-body strength standard.',
     builds: ['Chest', 'Front Delts', 'Triceps'],
@@ -294,6 +304,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'overhead-press',
     name: 'Overhead Press',
+    aliases: ['OHP', 'military press', 'shoulder press', 'strict press'],
     category: 'Push',
     tagline: 'Strict vertical pressing that builds real shoulder strength.',
     builds: ['Shoulders', 'Triceps', 'Upper Chest', 'Core'],
@@ -323,6 +334,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'incline-db-press',
     name: 'Incline Dumbbell Press',
+    aliases: ['incline bench', 'incline dumbbell bench press', 'incline press'],
     category: 'Push Accessory',
     tagline: 'Targets the upper chest with a joint-friendly path.',
     builds: ['Upper Chest', 'Front Delts', 'Triceps'],
@@ -352,6 +364,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'dip',
     name: 'Dip',
+    aliases: ['tricep dip', 'chest dip', 'parallel bar dip'],
     category: 'Push Accessory',
     tagline: 'Bodyweight pressing that scales from beginner to loaded beast.',
     builds: ['Chest', 'Triceps', 'Front Delts'],
@@ -381,6 +394,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'pull-up',
     name: 'Pull-Up',
+    aliases: ['pullup', 'chin up', 'chinup', 'chin-up'],
     category: 'Pull',
     tagline: 'The gold standard for relative back and grip strength.',
     builds: ['Lats', 'Biceps', 'Upper Back', 'Grip'],
@@ -410,6 +424,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'barbell-row',
     name: 'Barbell Row',
+    aliases: ['bent over row', 'BB row', 'pendlay row'],
     category: 'Pull',
     tagline: 'Heavy horizontal pulling for a thick, strong back.',
     builds: ['Lats', 'Rhomboids', 'Rear Delts', 'Spinal Erectors'],
@@ -439,6 +454,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'lat-pulldown',
     name: 'Lat Pulldown',
+    aliases: ['pulldown', 'cable pulldown'],
     category: 'Pull Accessory',
     tagline: "Machine-based lat builder that's easy to load and control.",
     builds: ['Lats', 'Biceps', 'Upper Back'],
@@ -468,6 +484,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'seated-cable-row',
     name: 'Seated Cable Row',
+    aliases: ['cable row', 'machine row'],
     category: 'Pull Accessory',
     tagline: 'Controlled horizontal pulling volume for a thicker back.',
     builds: ['Lats', 'Rhomboids', 'Rear Delts', 'Biceps'],
@@ -497,6 +514,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'hip-thrust',
     name: 'Hip Thrust',
+    aliases: ['barbell hip thrust', 'glute bridge'],
     category: 'Posterior Chain Accessory',
     tagline: 'The most direct, joint-friendly glute builder available.',
     builds: ['Glutes', 'Hamstrings'],
@@ -526,6 +544,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'leg-curl',
     name: 'Leg Curl',
+    aliases: ['hamstring curl', 'lying leg curl', 'seated leg curl'],
     category: 'Hamstring Accessory',
     tagline: "Isolated knee-flexion work the big lifts don't fully cover.",
     builds: ['Hamstrings'],
@@ -555,6 +574,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'plank',
     name: 'Plank',
+    aliases: ['forearm plank', 'core hold'],
     category: 'Core',
     tagline: 'Anti-extension bracing that builds a bulletproof midline.',
     builds: ['Rectus Abdominis', 'Obliques', 'Core Stability'],
@@ -584,6 +604,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'hanging-leg-raise',
     name: 'Hanging Leg Raise',
+    aliases: ['leg raises', 'toes to bar', 'knee raises'],
     category: 'Core',
     tagline: 'Demanding anti-flexion work for a strong, athletic core.',
     builds: ['Rectus Abdominis', 'Hip Flexors', 'Grip'],
@@ -613,6 +634,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'face-pull',
     name: 'Face Pull',
+    aliases: ['band face pull', 'cable face pull'],
     category: 'Shoulder Health Accessory',
     tagline: 'Small movement, huge payoff for shoulder health and posture.',
     builds: ['Rear Delts', 'Rotator Cuff', 'Upper Back'],
@@ -642,6 +664,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'barbell-curl',
     name: 'Barbell Curl',
+    aliases: ['bicep curl', 'bb curl'],
     category: 'Arm Accessory',
     tagline: 'The classic biceps builder for size and elbow-flexion strength.',
     builds: ['Biceps', 'Forearms'],
@@ -671,6 +694,7 @@ export const EXERCISES: Exercise[] = [
   {
     id: 'farmers-carry',
     name: "Farmer's Carry",
+    aliases: ['farmer carry', 'loaded carry'],
     category: 'Total / Conditioning',
     tagline: 'Loaded carrying that builds grip, trunk, and total-body toughness.',
     builds: ['Grip', 'Core', 'Traps', 'Total-Body Stability'],

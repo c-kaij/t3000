@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b1220">
+<title>Sunset Direction</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; }
+  #map { position: absolute; inset: 0; height: 100dvh; width: 100%; background: #0b1220; }
+
+  .me-dot { width: 20px; height: 20px; border-radius: 50%; background: rgba(66,133,244,0.35); display:flex; align-items:center; justify-content:center; }
+  .me-dot-core { width: 12px; height: 12px; border-radius: 50%; background: #4285f4; border: 2px solid #fff; box-shadow: 0 0 4px rgba(0,0,0,0.5); }
+  .sunset-marker { font-size: 26px; line-height: 34px; text-align:center; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.6)); }
+  .sun-live-marker { font-size: 20px; line-height: 28px; text-align:center; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.6)); }
+  .spot-pin { width: 26px; height: 26px; border-radius: 50% 50% 50% 0; background:#1f6feb; transform: rotate(-45deg); display:flex; align-items:center; justify-content:center; box-shadow: 0 1px 4px rgba(0,0,0,0.5); border: 2px solid #fff; }
+  .spot-pin span { transform: rotate(45deg); font-size: 13px; }
+  .spot-custom { background:#d9534f; }
+
+  .leaflet-popup-content { font-size: 14px; min-width: 180px; }
+  .spot-popup h3 { margin: 0 0 4px; font-size: 15px; }
+  .spot-popup p { margin: 2px 0; color:#333; }
+  .del-btn { margin-top:6px; padding:6px 10px; border:none; border-radius:8px; background:#d9534f; color:#fff; font-size:13px; }
+
+  #panel {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 500;
+    background: rgba(11,18,32,0.86); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    color: #f2f4f8; border-radius: 18px 18px 0 0; box-shadow: 0 -2px 20px rgba(0,0,0,0.35);
+    padding: 8px 16px calc(14px + env(safe-area-inset-bottom));
+    transition: transform 0.25s ease;
+  }
+  #panel.collapsed { transform: translateY(calc(100% - 46px)); }
+  #handle { width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.3); margin: 4px auto 10px; }
+  #summary { display:flex; justify-content:space-between; align-items:center; }
+  #summary .big { font-size: 20px; font-weight: 600; }
+  #summary .sub { font-size: 12px; opacity: 0.75; margin-top:2px; }
+  .stat-row { display:flex; gap:18px; margin-top:12px; flex-wrap:wrap; }
+  .stat { min-width: 84px; }
+  .stat .label { font-size: 11px; text-transform:uppercase; letter-spacing:0.04em; opacity:0.6; }
+  .stat .value { font-size: 16px; font-weight: 600; margin-top:2px; }
+  #spotList { margin-top: 14px; max-height: 34vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .spot-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px solid rgba(255,255,255,0.08); }
+  .spot-row .name { font-size:14px; }
+  .spot-row .meta { font-size:12px; opacity:0.65; }
+  .hint { font-size:12px; opacity:0.6; margin-top:10px; }
+
+  #fabRow { position:absolute; right:12px; top: calc(70px + env(safe-area-inset-top)); z-index:500; display:flex; flex-direction:column; gap:10px; }
+  .fab { width:46px; height:46px; border-radius:50%; background:rgba(11,18,32,0.86); color:#fff; border:1px solid rgba(255,255,255,0.15);
+         display:flex; align-items:center; justify-content:center; font-size:20px; box-shadow:0 2px 10px rgba(0,0,0,0.4); }
+  .fab.active { background:#ff7a3d; }
+
+  #banner {
+    position:absolute; top: calc(10px + env(safe-area-inset-top)); left:12px; right:70px; z-index:600;
+    background:rgba(217,83,79,0.95); color:#fff; padding:10px 14px; border-radius:12px; font-size:13px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.4);
+  }
+  #banner button { margin-top:6px; background:rgba(255,255,255,0.2); border:none; color:#fff; padding:6px 10px; border-radius:8px; font-size:12px; }
+  #banner.hidden { display:none; }
+
+  #onboardHint {
+    position:absolute; top: calc(10px + env(safe-area-inset-top)); left:12px; right:70px; z-index:550;
+    background:rgba(11,18,32,0.86); color:#f2f4f8; padding:10px 14px; border-radius:12px; font-size:13px;
+  }
+  #onboardHint.hidden { display:none; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div id="banner" class="hidden"></div>
+<div id="onboardHint" class="hidden">Long‑press (or tap and hold) anywhere on the map to save your own sunset‑viewing spot. It's saved only on this phone.</div>
+
+<div id="fabRow">
+  <button class="fab" id="fabRecenter" title="Center on me">📍</button>
+  <button class="fab" id="fabSun" title="Toggle live sun position">☀️</button>
+</div>
+
+<div id="panel">
+  <div id="handle"></div>
+  <div id="summary">
+    <div>
+      <div class="big" id="countdown">–</div>
+      <div class="sub" id="dateLabel">–</div>
+    </div>
+    <div style="text-align:right">
+      <div class="big" id="bearing">–</div>
+      <div class="sub">sunset direction</div>
+    </div>
+  </div>
+  <div class="stat-row">
+    <div class="stat"><div class="label">Sunset</div><div class="value" id="sunsetTime">–</div></div>
+    <div class="stat"><div class="label">Sunrise</div><div class="value" id="sunriseTime">–</div></div>
+    <div class="stat"><div class="label">Golden hour</div><div class="value" id="goldenTime">–</div></div>
+    <div class="stat"><div class="label">Location</div><div class="value" id="locStatus">–</div></div>
+  </div>
+  <div id="spotList"></div>
+  <div class="hint">Orange dashed line = tonight's sunset direction from your position. Long‑press the map to drop your own viewpoint pin.</div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
+<script>
+(function () {
+  var PORT_CROS_CENTER = [43.0086, 6.3908];
+  var RAY_KM = 4;
+  var STORAGE_KEY = 'sunsetApp.customSpots.v1';
+  var HINT_SEEN_KEY = 'sunsetApp.onboardSeen.v1';
+
+  // Seed viewpoints for Port-Cros (test island). "confirmed" = coordinates verified
+  // against a geocoded source; "approx" = positioned from written descriptions only —
+  // nudge them with a long-press once you're actually there.
+  var seedSpots = [
+    { id: 'palud', name: 'Plage de la Palud', confidence: 'confirmed',
+      note: 'Wide bay open to the west — the easiest, flattest sunset spot on the island.',
+      lat: 43.0131, lng: 6.39273 },
+    { id: 'estissac', name: "Fort de l'Estissac", confidence: 'approx',
+      note: "15–20 min climb above the port; open view over the harbour and out to sea.",
+      lat: 43.0070, lng: 6.3920 },
+    { id: 'vigie', name: 'Fortin de la Vigie', confidence: 'approx',
+      note: 'Highest point on the island (199 m) — 360° panorama, on the Forts hiking circuit.',
+      lat: 43.0075, lng: 6.3860 },
+    { id: 'eminence', name: "Fort de l'Éminence", confidence: 'approx',
+      note: 'Largest fort on Port-Cros, elevated position on the eastern ridge.',
+      lat: 43.0055, lng: 6.4000 },
+    { id: 'portman', name: 'Port-Man', confidence: 'approx',
+      note: 'Sheltered bay on the east side — faces sunrise more than sunset, kept for reference.',
+      lat: 43.0125, lng: 6.4200 }
+  ];
+
+  var $ = function (sel) { return document.querySelector(sel); };
+
+  var map = L.map('map', { zoomControl: false, attributionControl: true }).setView(PORT_CROS_CENTER, 14);
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 19,
+    attribution: 'Imagery &copy; Esri, Maxar, Earthstar Geographics'
+  }).addTo(map);
+
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 19,
+    opacity: 0.9
+  }).addTo(map);
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function toRad(d) { return d * Math.PI / 180; }
+  function toDeg(r) { return r * 180 / Math.PI; }
+
+  function haversineKm(lat1, lng1, lat2, lng2) {
+    var R = 6371;
+    var dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  function bearingDeg(lat1, lng1, lat2, lng2) {
+    var y = Math.sin(toRad(lng2 - lng1)) * Math.cos(toRad(lat2));
+    var x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
+      Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(toRad(lng2 - lng1));
+    return (toDeg(Math.atan2(y, x)) + 360) % 360;
+  }
+
+  function destPoint(lat, lng, bearingDegVal, distKm) {
+    var R = 6371, brng = toRad(bearingDegVal);
+    var lat1 = toRad(lat), lng1 = toRad(lng);
+    var lat2 = Math.asin(Math.sin(lat1) * Math.cos(distKm / R) + Math.cos(lat1) * Math.sin(distKm / R) * Math.cos(brng));
+    var lng2 = lng1 + Math.atan2(Math.sin(brng) * Math.sin(distKm / R) * Math.cos(lat1), Math.cos(distKm / R) - Math.sin(lat1) * Math.sin(lat2));
+    return [toDeg(lat2), toDeg(lng2)];
+  }
+
+  // SunCalc's azimuth is 0 = south, positive = west; compass bearing is 0 = north.
+  function sunAzimuthCompass(date, lat, lng) {
+    var pos = SunCalc.getPosition(date, lat, lng);
+    return (toDeg(pos.azimuth) + 180 + 360) % 360;
+  }
+
+  function compass16(deg) {
+    var dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    return dirs[Math.round(deg / 22.5) % 16];
+  }
+
+  function fmtTime(d) {
+    return d instanceof Date && !isNaN(d) ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '–';
+  }
+
+  function fmtCountdown(ms) {
+    if (ms <= 0) return 'Already set';
+    var totalMin = Math.round(ms / 60000);
+    var h = Math.floor(totalMin / 60), m = totalMin % 60;
+    return h > 0 ? (h + 'h ' + m + 'm to sunset') : (m + 'm to sunset');
+  }
+
+  // --- location state ---
+  var meLatLng = null;
+  var meMarker = null, accCircle = null;
+  var meIcon = L.divIcon({ className: '', html: '<div class="me-dot"><div class="me-dot-core"></div></div>', iconSize: [20, 20] });
+
+  function showBanner(msg) {
+    var b = $('#banner');
+    b.innerHTML = escapeHtml(msg) + '<div><button id="bannerDismiss">Dismiss</button></div>';
+    b.classList.remove('hidden');
+    $('#bannerDismiss').addEventListener('click', function () { b.classList.add('hidden'); });
+  }
+  function hideBanner() { $('#banner').classList.add('hidden'); }
+
+  function setMe(lat, lng, accuracy, source) {
+    meLatLng = L.latLng(lat, lng);
+    if (!meMarker) {
+      meMarker = L.marker(meLatLng, { icon: meIcon, draggable: true, zIndexOffset: 1000 }).addTo(map);
+      meMarker.on('dragend', function (e) {
+        var p = e.target.getLatLng();
+        setMe(p.lat, p.lng, null, 'manual');
+      });
+    } else {
+      meMarker.setLatLng(meLatLng);
+    }
+    if (accuracy) {
+      if (!accCircle) {
+        accCircle = L.circle(meLatLng, { radius: accuracy, color: '#4285f4', weight: 1, fillOpacity: 0.12 }).addTo(map);
+      } else {
+        accCircle.setLatLng(meLatLng);
+        accCircle.setRadius(accuracy);
+      }
+    } else if (accCircle) {
+      map.removeLayer(accCircle);
+      accCircle = null;
+    }
+    $('#locStatus').textContent = source === 'gps' ? 'GPS' : 'Manual';
+    updateSunInfo();
+  }
+
+  var firstFix = true;
+  if ('geolocation' in navigator) {
+    navigator.geolocation.watchPosition(function (pos) {
+      hideBanner();
+      setMe(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, 'gps');
+      if (firstFix) { map.setView(meLatLng, 16); firstFix = false; }
+    }, function (err) {
+      showBanner('Location unavailable (' + err.message + '). Drag the blue pin, or tap the map once, to set your position.');
+    }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 });
+  } else {
+    showBanner('Geolocation not supported by this browser. Tap the map once to set your position.');
+  }
+
+  map.on('click', function (e) {
+    if (!meLatLng) {
+      setMe(e.latlng.lat, e.latlng.lng, null, 'manual');
+      hideBanner();
+    }
+  });
+
+  // --- sunset / sunrise ray ---
+  var sunsetLine = null, sunsetPoint = null;
+  var liveSunLine = null, liveSunPoint = null;
+  var liveSunOn = false;
+
+  function updateSunInfo() {
+    if (!meLatLng) return;
+    var now = new Date();
+    var times = SunCalc.getTimes(now, meLatLng.lat, meLatLng.lng);
+    var sunsetBearing = sunAzimuthCompass(times.sunset, meLatLng.lat, meLatLng.lng);
+    var end = destPoint(meLatLng.lat, meLatLng.lng, sunsetBearing, RAY_KM);
+
+    if (!sunsetLine) {
+      sunsetLine = L.polyline([meLatLng, end], { color: '#ff7a3d', weight: 4, opacity: 0.9, dashArray: '2 10', lineCap: 'round' }).addTo(map);
+      sunsetPoint = L.marker(end, { icon: L.divIcon({ className: '', html: '<div class="sunset-marker">🌇</div>', iconSize: [34, 34] }) }).addTo(map);
+    } else {
+      sunsetLine.setLatLngs([meLatLng, end]);
+      sunsetPoint.setLatLng(end);
+    }
+
+    if (liveSunOn) updateLiveSun(now);
+
+    var msLeft = times.sunset - now;
+    $('#countdown').textContent = fmtCountdown(msLeft);
+    $('#dateLabel').textContent = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+    $('#bearing').textContent = Math.round(sunsetBearing) + '° ' + compass16(sunsetBearing);
+    $('#sunsetTime').textContent = fmtTime(times.sunset);
+    $('#sunriseTime').textContent = fmtTime(times.sunrise);
+    $('#goldenTime').textContent = fmtTime(times.goldenHour);
+
+    renderSpotList();
+  }
+
+  function updateLiveSun(now) {
+    var pos = SunCalc.getPosition(now, meLatLng.lat, meLatLng.lng);
+    if (pos.altitude <= 0) {
+      if (liveSunLine) { map.removeLayer(liveSunLine); liveSunLine = null; }
+      if (liveSunPoint) { map.removeLayer(liveSunPoint); liveSunPoint = null; }
+      return;
+    }
+    var bearing = (toDeg(pos.azimuth) + 180 + 360) % 360;
+    var end = destPoint(meLatLng.lat, meLatLng.lng, bearing, RAY_KM * 0.6);
+    if (!liveSunLine) {
+      liveSunLine = L.polyline([meLatLng, end], { color: '#ffd54d', weight: 3, opacity: 0.85 }).addTo(map);
+      liveSunPoint = L.marker(end, { icon: L.divIcon({ className: '', html: '<div class="sun-live-marker">☀️</div>', iconSize: [26, 26] }) }).addTo(map);
+    } else {
+      liveSunLine.setLatLngs([meLatLng, end]);
+      liveSunPoint.setLatLng(end);
+    }
+  }
+
+  $('#fabSun').addEventListener('click', function () {
+    liveSunOn = !liveSunOn;
+    this.classList.toggle('active', liveSunOn);
+    if (!liveSunOn) {
+      if (liveSunLine) { map.removeLayer(liveSunLine); liveSunLine = null; }
+      if (liveSunPoint) { map.removeLayer(liveSunPoint); liveSunPoint = null; }
+    } else if (meLatLng) {
+      updateLiveSun(new Date());
+    }
+  });
+
+  $('#fabRecenter').addEventListener('click', function () {
+    if (meLatLng) map.setView(meLatLng, Math.max(map.getZoom(), 15));
+  });
+
+  setInterval(updateSunInfo, 30000);
+
+  // --- viewpoint spots (seed + custom) ---
+  function loadCustom() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch (e) { return []; }
+  }
+  function saveCustom(list) { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
+  var customSpots = loadCustom();
+
+  var spotsLayer = L.layerGroup().addTo(map);
+
+  function addCustomSpot(lat, lng) {
+    var name = prompt('Name this viewpoint:', 'My viewpoint');
+    if (name === null) return;
+    customSpots.push({ id: 'c' + Date.now(), name: name || 'Viewpoint', lat: lat, lng: lng, custom: true });
+    saveCustom(customSpots);
+    renderSpots();
+    renderSpotList();
+    if (!localStorage.getItem(HINT_SEEN_KEY)) {
+      localStorage.setItem(HINT_SEEN_KEY, '1');
+      $('#onboardHint').classList.add('hidden');
+    }
+  }
+
+  map.on('contextmenu', function (e) { addCustomSpot(e.latlng.lat, e.latlng.lng); });
+
+  function popupHtml(s) {
+    var distText = '';
+    if (meLatLng) {
+      var d = haversineKm(meLatLng.lat, meLatLng.lng, s.lat, s.lng);
+      var b = bearingDeg(meLatLng.lat, meLatLng.lng, s.lat, s.lng);
+      distText = '<p>' + (d < 1 ? Math.round(d * 1000) + ' m' : d.toFixed(1) + ' km') +
+        ' away, bearing ' + Math.round(b) + '° ' + compass16(b) + '</p>';
+    }
+    var noteHtml = s.note ? '<p>' + escapeHtml(s.note) + '</p>' : '';
+    var confHtml = s.confidence === 'approx' ? '<p style="color:#b45309">Approximate location — adjust once you\'re there.</p>' : '';
+    var delHtml = s.custom ? '<button class="del-btn" data-id="' + s.id + '">Remove</button>' : '';
+    return '<div class="spot-popup"><h3>' + escapeHtml(s.name) + '</h3>' + noteHtml + confHtml + distText + delHtml + '</div>';
+  }
+
+  function renderSpots() {
+    spotsLayer.clearLayers();
+    seedSpots.concat(customSpots).forEach(function (s) {
+      var icon = L.divIcon({
+        className: '',
+        html: '<div class="spot-pin' + (s.custom ? ' spot-custom' : '') + '"><span>' + (s.custom ? '📌' : '👁') + '</span></div>',
+        iconSize: [26, 26], iconAnchor: [13, 26]
+      });
+      var m = L.marker([s.lat, s.lng], { icon: icon }).addTo(spotsLayer);
+      m.bindPopup(function () { return popupHtml(s); });
+    });
+  }
+
+  map.on('popupopen', function (e) {
+    var node = e.popup._contentNode;
+    var btn = node && node.querySelector('.del-btn');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-id');
+        customSpots = customSpots.filter(function (s) { return s.id !== id; });
+        saveCustom(customSpots);
+        map.closePopup();
+        renderSpots();
+        renderSpotList();
+      });
+    }
+  });
+
+  function renderSpotList() {
+    var list = $('#spotList');
+    var all = seedSpots.concat(customSpots).map(function (s) {
+      var d = meLatLng ? haversineKm(meLatLng.lat, meLatLng.lng, s.lat, s.lng) : null;
+      return { s: s, d: d };
+    });
+    all.sort(function (a, b) { return (a.d || 0) - (b.d || 0); });
+    list.innerHTML = all.map(function (o) {
+      var distText = o.d != null ? (o.d < 1 ? Math.round(o.d * 1000) + ' m' : o.d.toFixed(1) + ' km') : '';
+      return '<div class="spot-row" data-lat="' + o.s.lat + '" data-lng="' + o.s.lng + '">' +
+        '<span class="name">' + (o.s.custom ? '📌 ' : '👁 ') + escapeHtml(o.s.name) + '</span>' +
+        '<span class="meta">' + distText + '</span></div>';
+    }).join('');
+    Array.prototype.forEach.call(list.querySelectorAll('.spot-row'), function (row) {
+      row.addEventListener('click', function () {
+        var lat = parseFloat(row.getAttribute('data-lat')), lng = parseFloat(row.getAttribute('data-lng'));
+        map.setView([lat, lng], Math.max(map.getZoom(), 16));
+      });
+    });
+  }
+
+  renderSpots();
+  renderSpotList();
+
+  if (!localStorage.getItem(HINT_SEEN_KEY)) {
+    $('#onboardHint').classList.remove('hidden');
+    setTimeout(function () { $('#onboardHint').classList.add('hidden'); }, 8000);
+  }
+
+  $('#handle').parentElement.addEventListener('click', function (e) {
+    if (e.target.id === 'handle') this.classList.toggle('collapsed');
+  });
+})();
+</script>
+</body>
+</html>
